@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mudiflow — Calculadora MCU</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1923; --surface: #162030; --surface2: #1e2d3d;
+    --accent: #00d4aa; --accent2: #f5a623; --accent3: #e05c5c;
+    --purple: #c4a8f0; --text: #e8edf2; --muted: #7a8fa6; --border: #243447;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:3rem; }
+
+  header { padding:2rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+  .logo { font-family:'Fraunces',serif; font-size:1.2rem; color:var(--accent); }
+  .logo span { color:var(--muted); font-size:0.8rem; font-family:'IBM Plex Sans',sans-serif; font-weight:300; display:block; margin-top:0.1rem; }
+
+  .main { max-width:900px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  @media(max-width:640px){ .main{ grid-template-columns:1fr; padding:1rem; } }
+
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; overflow:hidden; }
+  .panel-title { padding:1rem 1.25rem 0.75rem; font-size:0.7rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
+
+  .field { display:flex; align-items:center; justify-content:space-between; padding:0.6rem 1.25rem; border-bottom:1px solid var(--border); gap:0.75rem; }
+  .field:last-child { border-bottom:none; }
+  .field-label { font-size:0.84rem; color:#b0c4d8; flex:1; line-height:1.3; }
+  .field-label small { display:block; font-size:0.72rem; color:var(--muted); margin-top:0.1rem; }
+
+  .input-wrap { display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:0.4rem; overflow:hidden; min-width:110px; transition:border-color 0.2s; }
+  .input-wrap:focus-within { border-color:var(--accent); }
+  .input-prefix { padding:0.45rem 0.5rem 0.45rem 0.75rem; font-size:0.78rem; color:var(--muted); background:transparent; white-space:nowrap; font-family:'IBM Plex Mono',monospace; }
+  input[type="number"] { background:transparent; border:none; outline:none; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:0.88rem; width:70px; padding:0.45rem 0.6rem 0.45rem 0; text-align:right; }
+  input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
+
+  .discount-panel { background:#1a1428; border:1px solid #3d2a5a; border-radius:1rem; overflow:hidden; grid-column:1/-1; }
+  .discount-panel .panel-title { border-bottom-color:#3d2a5a; color:#9b7fd4; }
+  .discount-panel .field { border-bottom-color:#2a1e40; }
+  .discount-panel .input-wrap { background:#231832; border-color:#3d2a5a; }
+  .discount-panel .input-wrap:focus-within { border-color:#9b7fd4; }
+
+  /* TABELA COMPARATIVA */
+  .results-panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; grid-column:1/-1; overflow:hidden; }
+
+  .tbl-head {
+    display:grid;
+    grid-template-columns: 1fr 100px 100px 80px;
+    padding:0.7rem 1.25rem;
+    background:var(--surface2);
+    border-bottom:2px solid var(--border);
+    gap:0.5rem;
+  }
+  .th { font-size:0.68rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; text-align:right; }
+  .th:first-child { text-align:left; color:var(--muted); }
+  .th.col-base { color:var(--accent); }
+  .th.col-desc { color:var(--purple); }
+  .th.col-var  { color:var(--muted); }
+
+  .tbl-row {
+    display:grid;
+    grid-template-columns: 1fr 100px 100px 80px;
+    align-items:center;
+    padding:0.65rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    gap:0.5rem;
+    font-size:0.86rem;
+  }
+  .tbl-row:last-child { border-bottom:none; }
+  .tbl-row.subtotal { background:#111d2a; }
+  .tbl-row.total    { background:#1a1a14; }
+
+  .td-label { color:#b0c4d8; }
+  .td-label small { display:block; font-size:0.71rem; color:var(--muted); margin-top:0.1rem; }
+  .td-label.bold { font-weight:600; color:var(--text); }
+
+  .td-base, .td-desc, .td-var {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.86rem; font-weight:600; text-align:right;
+  }
+  .td-base { color:var(--accent); }
+  .td-desc { color:var(--purple); }
+  .td-var  { color:var(--muted); font-size:0.78rem; }
+  .td-var.worse  { color:var(--accent3); }
+  .td-var.better { color:var(--accent); }
+  .td-var.neutral{ color:var(--muted); }
+
+  /* custo = negativo, mostra em vermelho suave */
+  .td-base.cost { color:#e08080; }
+  .td-desc.cost { color:#cc88cc; }
+
+  /* MCU highlight */
+  .mcu-block {
+    background:var(--bg); border-top:2px solid var(--accent);
+    padding:1.25rem; display:flex; align-items:center;
+    justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  }
+  .mcu-label { font-family:'Fraunces',serif; font-size:1.05rem; font-style:italic; color:var(--text); }
+  .mcu-label small { display:block; font-family:'IBM Plex Sans',sans-serif; font-size:0.72rem; color:var(--muted); font-style:normal; margin-top:0.2rem; }
+  .mcu-values { display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap; }
+  .mcu-val { text-align:right; }
+  .mcu-val .num { font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:600; color:var(--accent); line-height:1; }
+  .mcu-val .num.disc { color:var(--purple); }
+  .mcu-val .num.queda { font-size:1.1rem; }
+  .mcu-val .sub { font-size:0.71rem; color:var(--muted); margin-top:0.2rem; }
+  .mcu-sep { color:var(--border); font-size:1.2rem; }
+  .mcu-divider { border-left:1px solid var(--border); padding-left:1.25rem; margin-left:0.25rem; }
+
+  /* insight */
+  .insight-box { background:#1a1a14; border:1px solid #3d3a1a; border-radius:0.75rem; padding:1rem 1.25rem; font-size:0.84rem; color:#d4c87a; line-height:1.7; grid-column:1/-1; }
+
+  /* PE */
+  .pe-panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; grid-column:1/-1; padding:1.25rem; }
+  .pe-title { font-size:0.7rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; }
+  .pe-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; }
+  .pe-card { background:var(--surface2); border-radius:0.75rem; padding:1rem; }
+  .pe-card-label { font-size:0.75rem; color:var(--muted); margin-bottom:0.4rem; }
+  .pe-card-val { font-family:'IBM Plex Mono',monospace; font-size:1.05rem; font-weight:600; color:var(--text); }
+  .pe-card-sub { font-size:0.72rem; color:var(--muted); margin-top:0.25rem; }
+  .pe-fixed-wrap { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .pe-fixed-wrap label { font-size:0.84rem; color:#b0c4d8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Mudiflow<span>Calculadora de Margem de Contribuição Unitária</span></div>
+</header>
+
+<div class="main">
+
+  <div class="panel">
+    <div class="panel-title">Receita</div>
+    <div class="field">
+      <div class="field-label">Preço de venda</div>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="preco" value="150" min="0" step="0.01" oninput="calc()"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Custos variáveis em %</div>
+    <div class="field">
+      <div class="field-label">Imposto sobre venda<small>Simples, ISS, etc.</small></div>
+      <div class="input-wrap"><input type="number" id="imposto" value="8" min="0" max="100" step="0.1" oninput="calc()"><span class="input-prefix">%</span></div>
+    </div>
+    <div class="field">
+      <div class="field-label">Comissão de vendedor</div>
+      <div class="input-wrap"><input type="number" id="comissao" value="5" min="0" max="100" step="0.1" oninput="calc()"><span class="input-prefix">%</span></div>
+    </div>
+    <div class="field">
+      <div class="field-label">Taxa do cartão</div>
+      <div class="input-wrap"><input type="number" id="cartao" value="3" min="0" max="100" step="0.1" oninput="calc()"><span class="input-prefix">%</span></div>
+    </div>
+    <div class="field">
+      <div class="field-label">Campanha / tráfego pago</div>
+      <div class="input-wrap"><input type="number" id="campanha" value="6" min="0" max="100" step="0.1" oninput="calc()"><span class="input-prefix">%</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Custos variáveis em R$</div>
+    <div class="field">
+      <div class="field-label">Custo do produto / CMV<small>Incluir frete de compra</small></div>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="cmv" value="65" min="0" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field">
+      <div class="field-label">Frete de venda<small>Valor subsidiado pela empresa</small></div>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="frete" value="8" min="0" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field">
+      <div class="field-label">Outros custos variáveis</div>
+      <div class="input-wrap"><span class="input-prefix">R$</span><input type="number" id="outros" value="0" min="0" step="0.01" oninput="calc()"></div>
+    </div>
+  </div>
+
+  <div class="discount-panel">
+    <div class="panel-title">🏷 Simulação de desconto</div>
+    <div class="field">
+      <div class="field-label">Desconto concedido ao cliente<small>Todos os custos recalculados automaticamente abaixo</small></div>
+      <div class="input-wrap" style="border-color:#3d2a5a">
+        <input type="number" id="desconto" value="10" min="0" max="100" step="0.1" oninput="calc()" style="color:#c4a8f0">
+        <span class="input-prefix" style="color:#9b7fd4">%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA COMPARATIVA COMPLETA -->
+  <div class="results-panel">
+    <div class="tbl-head">
+      <div class="th">Item</div>
+      <div class="th col-base">Sem desc.</div>
+      <div class="th col-desc">Com desc.</div>
+      <div class="th col-var">Variação</div>
+    </div>
+
+    <!-- preço -->
+    <div class="tbl-row subtotal">
+      <div class="td-label bold">Preço de venda</div>
+      <div class="td-base" id="v_preco">—</div>
+      <div class="td-desc" id="vd_preco">—</div>
+      <div class="td-var" id="var_preco">—</div>
+    </div>
+
+    <!-- cmv -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Custo produto + frete compra</div>
+      <div class="td-base cost" id="v_cmv">—</div>
+      <div class="td-desc cost" id="vd_cmv">—</div>
+      <div class="td-var neutral" id="var_cmv">fixo</div>
+    </div>
+
+    <!-- impostos -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Impostos sobre venda</div>
+      <div class="td-base cost" id="v_imp">—</div>
+      <div class="td-desc cost" id="vd_imp">—</div>
+      <div class="td-var" id="var_imp">—</div>
+    </div>
+
+    <!-- comissão -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Comissão de vendedor</div>
+      <div class="td-base cost" id="v_com">—</div>
+      <div class="td-desc cost" id="vd_com">—</div>
+      <div class="td-var" id="var_com">—</div>
+    </div>
+
+    <!-- cartão -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Taxa do cartão</div>
+      <div class="td-base cost" id="v_car">—</div>
+      <div class="td-desc cost" id="vd_car">—</div>
+      <div class="td-var" id="var_car">—</div>
+    </div>
+
+    <!-- campanha -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Campanha / tráfego</div>
+      <div class="td-base cost" id="v_camp">—</div>
+      <div class="td-desc cost" id="vd_camp">—</div>
+      <div class="td-var" id="var_camp">—</div>
+    </div>
+
+    <!-- frete venda -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Frete de venda</div>
+      <div class="td-base cost" id="v_fre">—</div>
+      <div class="td-desc cost" id="vd_fre">—</div>
+      <div class="td-var neutral" id="var_fre">fixo</div>
+    </div>
+
+    <!-- outros -->
+    <div class="tbl-row">
+      <div class="td-label">(-) Outros custos variáveis</div>
+      <div class="td-base cost" id="v_out">—</div>
+      <div class="td-desc cost" id="vd_out">—</div>
+      <div class="td-var neutral" id="var_out">fixo</div>
+    </div>
+
+    <!-- total cv -->
+    <div class="tbl-row total">
+      <div class="td-label bold">(=) Total custos variáveis</div>
+      <div class="td-base cost" id="v_total">—</div>
+      <div class="td-desc cost" id="vd_total">—</div>
+      <div class="td-var" id="var_total">—</div>
+    </div>
+
+    <!-- MCU -->
+    <div class="mcu-block">
+      <div class="mcu-label">
+        Margem de Contribuição Unitária
+        <small>sem desconto → com desconto</small>
+      </div>
+      <div class="mcu-values">
+        <div class="mcu-val">
+          <div class="num" id="mcu_val">—</div>
+          <div class="sub" id="mcu_pct">—</div>
+        </div>
+        <div class="mcu-sep">→</div>
+        <div class="mcu-val">
+          <div class="num disc" id="mcu_desc_val">—</div>
+          <div class="sub" id="mcu_desc_pct">—</div>
+        </div>
+        <div class="mcu-val mcu-divider">
+          <div class="num queda" id="mcu_queda" style="color:var(--accent3)">—</div>
+          <div class="sub">queda na MCU</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-box" id="insightBox">—</div>
+
+  <div class="pe-panel">
+    <div class="pe-title">Ponto de equilíbrio</div>
+    <div class="pe-fixed-wrap">
+      <label>Custos fixos mensais:</label>
+      <div class="input-wrap" style="min-width:140px"><span class="input-prefix">R$</span><input type="number" id="cf" value="10000" min="0" step="100" oninput="calc()"></div>
+    </div>
+    <div class="pe-grid">
+      <div class="pe-card"><div class="pe-card-label">PE sem desconto</div><div class="pe-card-val" id="pe_un">—</div><div class="pe-card-sub">unidades / mês</div></div>
+      <div class="pe-card"><div class="pe-card-label">PE com desconto</div><div class="pe-card-val" id="pe_desc_un" style="color:var(--purple)">—</div><div class="pe-card-sub">unidades / mês</div></div>
+      <div class="pe-card"><div class="pe-card-label">PE em R$ (sem desconto)</div><div class="pe-card-val" id="pe_rs">—</div><div class="pe-card-sub">faturamento mínimo</div></div>
+      <div class="pe-card"><div class="pe-card-label">PE em R$ (com desconto)</div><div class="pe-card-val" id="pe_desc_rs" style="color:var(--purple)">—</div><div class="pe-card-sub">faturamento mínimo</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const fmt  = v => 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  const fmtN = v => v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+
+  function setVar(id, before, after, fixedCost = false) {
+    const el = document.getElementById(id);
+    if (fixedCost) { el.textContent = 'fixo'; el.className = 'td-var neutral'; return; }
+    const diff = after - before;
+    if (Math.abs(diff) < 0.001) { el.textContent = '–'; el.className = 'td-var neutral'; return; }
+    el.textContent = (diff > 0 ? '+' : '') + fmt(diff);
+    // para custos: redução (diff<0) = better; para preço: redução = worse
+    el.className = 'td-var ' + (diff < 0 ? 'better' : 'worse');
+  }
+
+  function setVarPrice(id, before, after) {
+    const el = document.getElementById(id);
+    const diff = after - before;
+    if (Math.abs(diff) < 0.001) { el.textContent = '–'; el.className = 'td-var neutral'; return; }
+    el.textContent = (diff > 0 ? '+' : '') + fmt(diff);
+    el.className = 'td-var ' + (diff < 0 ? 'worse' : 'better');
+  }
+
+  function calc() {
+    const preco  = parseFloat(document.getElementById('preco').value)    || 0;
+    const cmv    = parseFloat(document.getElementById('cmv').value)      || 0;
+    const frete  = parseFloat(document.getElementById('frete').value)    || 0;
+    const outros = parseFloat(document.getElementById('outros').value)   || 0;
+    const imp    = parseFloat(document.getElementById('imposto').value)  || 0;
+    const com    = parseFloat(document.getElementById('comissao').value) || 0;
+    const car    = parseFloat(document.getElementById('cartao').value)   || 0;
+    const camp   = parseFloat(document.getElementById('campanha').value) || 0;
+    const desc   = parseFloat(document.getElementById('desconto').value) || 0;
+    const cf     = parseFloat(document.getElementById('cf').value)       || 0;
+
+    // SEM DESCONTO
+    const v_imp  = preco * imp  / 100;
+    const v_com  = preco * com  / 100;
+    const v_car  = preco * car  / 100;
+    const v_camp = preco * camp / 100;
+    const total_cv = cmv + frete + outros + v_imp + v_com + v_car + v_camp;
+    const mcu    = preco - total_cv;
+    const mcu_pct = preco > 0 ? mcu / preco * 100 : 0;
+
+    // COM DESCONTO
+    const preco_d  = preco * (1 - desc / 100);
+    const vd_imp   = preco_d * imp  / 100;
+    const vd_com   = preco_d * com  / 100;
+    const vd_car   = preco_d * car  / 100;
+    const vd_camp  = preco_d * camp / 100;
+    const total_cv_d = cmv + frete + outros + vd_imp + vd_com + vd_car + vd_camp;
+    const mcu_d    = preco_d - total_cv_d;
+    const mcu_d_pct = preco_d > 0 ? mcu_d / preco_d * 100 : 0;
+
+    // PE
+    const pe_un    = mcu   > 0 ? cf / mcu   : Infinity;
+    const pe_rs    = mcu   > 0 ? pe_un * preco   : Infinity;
+    const pe_d_un  = mcu_d > 0 ? cf / mcu_d : Infinity;
+    const pe_d_rs  = mcu_d > 0 ? pe_d_un * preco_d : Infinity;
+
+    // PREÇO
+    document.getElementById('v_preco').textContent  = fmt(preco);
+    document.getElementById('vd_preco').textContent = fmt(preco_d);
+    setVarPrice('var_preco', preco, preco_d);
+
+    // CMV (fixo)
+    document.getElementById('v_cmv').textContent  = fmt(cmv);
+    document.getElementById('vd_cmv').textContent = fmt(cmv);
+    setVar('var_cmv', cmv, cmv, true);
+
+    // IMPOSTOS
+    document.getElementById('v_imp').textContent  = fmt(v_imp);
+    document.getElementById('vd_imp').textContent = fmt(vd_imp);
+    setVar('var_imp', v_imp, vd_imp);
+
+    // COMISSÃO
+    document.getElementById('v_com').textContent  = fmt(v_com);
+    document.getElementById('vd_com').textContent = fmt(vd_com);
+    setVar('var_com', v_com, vd_com);
+
+    // CARTÃO
+    document.getElementById('v_car').textContent  = fmt(v_car);
+    document.getElementById('vd_car').textContent = fmt(vd_car);
+    setVar('var_car', v_car, vd_car);
+
+    // CAMPANHA
+    document.getElementById('v_camp').textContent  = fmt(v_camp);
+    document.getElementById('vd_camp').textContent = fmt(vd_camp);
+    setVar('var_camp', v_camp, vd_camp);
+
+    // FRETE (fixo)
+    document.getElementById('v_fre').textContent  = fmt(frete);
+    document.getElementById('vd_fre').textContent = fmt(frete);
+    setVar('var_fre', frete, frete, true);
+
+    // OUTROS (fixo)
+    document.getElementById('v_out').textContent  = fmt(outros);
+    document.getElementById('vd_out').textContent = fmt(outros);
+    setVar('var_out', outros, outros, true);
+
+    // TOTAL CV
+    document.getElementById('v_total').textContent  = fmt(total_cv);
+    document.getElementById('vd_total').textContent = fmt(total_cv_d);
+    setVar('var_total', total_cv, total_cv_d);
+
+    // MCU
+    document.getElementById('mcu_val').textContent      = fmt(mcu);
+    document.getElementById('mcu_pct').textContent      = mcu_pct.toFixed(1) + '% da receita';
+    document.getElementById('mcu_desc_val').textContent = fmt(mcu_d);
+    document.getElementById('mcu_desc_pct').textContent = mcu_d_pct.toFixed(1) + '% com desconto';
+
+    const quedaMCU = mcu > 0 ? ((mcu - mcu_d) / mcu * 100) : 0;
+    const quedaEl = document.getElementById('mcu_queda');
+    quedaEl.textContent = quedaMCU.toFixed(1) + '%';
+    quedaEl.style.color = mcu_d < mcu ? 'var(--accent3)' : 'var(--accent)';
+
+    // PE
+    document.getElementById('pe_un').textContent      = isFinite(pe_un)   ? fmtN(pe_un)   + ' un' : '∞';
+    document.getElementById('pe_rs').textContent      = isFinite(pe_rs)   ? fmt(pe_rs)            : '∞';
+    document.getElementById('pe_desc_un').textContent = isFinite(pe_d_un) ? fmtN(pe_d_un) + ' un' : '∞';
+    document.getElementById('pe_desc_rs').textContent = isFinite(pe_d_rs) ? fmt(pe_d_rs)          : '∞';
+
+    // INSIGHT
+    const extraUn = isFinite(pe_d_un) && isFinite(pe_un) ? Math.ceil(pe_d_un - pe_un) : null;
+    let insight = '';
+    if (desc > 0 && mcu > 0) {
+      insight = `⚠ Um desconto de ${desc.toFixed(1)}% no preço derruba a MCU em ${quedaMCU.toFixed(1)}% — de ${fmt(mcu)} para ${fmt(mcu_d)} por unidade.`;
+      if (extraUn !== null && extraUn > 0)
+        insight += ` Para manter o mesmo resultado, você precisaria vender mais ${fmtN(extraUn)} unidades extras por mês.`;
+      if (mcu_d <= 0)
+        insight = `🚨 Com ${desc.toFixed(1)}% de desconto a empresa vende no prejuízo. Cada unidade vendida piora o caixa em ${fmt(Math.abs(mcu_d))}.`;
+    } else {
+      insight = `✅ Sem desconto, cada unidade gera ${fmt(mcu)} de margem de contribuição (${mcu_pct.toFixed(1)}% do preço de venda).`;
+    }
+    document.getElementById('insightBox').innerHTML = insight;
+  }
+
+  calc();
+</script>
+</body>
+</html>
