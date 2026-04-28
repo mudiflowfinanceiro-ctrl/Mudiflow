@@ -7,9 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1923; --surface: #162030; --surface2: #1e2d3d;
-    --accent: #00d4aa; --accent2: #f5a623; --accent3: #e05c5c;
-    --purple: #c4a8f0; --text: #e8edf2; --muted: #7a8fa6; --border: #243447;
+    --bg: #0f0f28; --surface: #18183a; --surface2: #222258;
+    --accent: #DC643C; --accent2: #f0783c; --accent3: #e05c5c;
+    --purple: #a0a0e0; --text: #f0eefc; --muted: #8888bb; --border: #2e2e6a;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:3rem; }
@@ -19,7 +19,29 @@
   .logo span { color:var(--muted); font-size:0.8rem; font-family:'IBM Plex Sans',sans-serif; font-weight:300; display:block; margin-top:0.1rem; }
 
   .main { max-width:900px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-  @media(max-width:640px){ .main{ grid-template-columns:1fr; padding:1rem; } }
+  @media(max-width:640px){
+  .main { grid-template-columns:1fr; padding:1rem; gap:1rem; }
+  .panel-title { font-size:0.65rem; padding:0.75rem 1rem 0.6rem; }
+  .field { padding:0.55rem 1rem; }
+  .field-label { font-size:0.8rem; }
+  .input-wrap { min-width:90px; }
+  input[type="number"] { width:55px; font-size:0.82rem; }
+  .tbl-head, .tbl-row { grid-template-columns:1fr 80px 80px 62px; padding:0.55rem 1rem; font-size:0.78rem; }
+  .th, .td-base, .td-desc, .td-var { font-size:0.72rem; }
+  .mcu-block { flex-direction:column; align-items:flex-start; gap:0.75rem; padding:1rem; }
+  .mcu-values { flex-wrap:wrap; gap:1rem; }
+  .mcu-val .num { font-size:1.2rem; }
+  .mcu-label { font-size:0.95rem; }
+  .mcu-divider { border-left:none; padding-left:0; margin-left:0; border-top:1px solid var(--border); padding-top:0.75rem; width:100%; }
+  .pe-grid { grid-template-columns:1fr 1fr; }
+  .pe-card-val { font-size:0.95rem; }
+  .pe-fixed-wrap { flex-direction:column; align-items:flex-start; gap:0.5rem; }
+  .discount-panel { grid-column:1/-1; }
+  .results-panel { grid-column:1/-1; }
+  .insight-box { font-size:0.8rem; padding:0.85rem 1rem; }
+  header { padding:1.25rem 1rem; }
+  .logo { font-size:1rem; }
+}
 
   .panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; overflow:hidden; }
   .panel-title { padding:1rem 1.25rem 0.75rem; font-size:0.7rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
@@ -35,11 +57,11 @@
   input[type="number"] { background:transparent; border:none; outline:none; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:0.88rem; width:70px; padding:0.45rem 0.6rem 0.45rem 0; text-align:right; }
   input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
 
-  .discount-panel { background:#1a1428; border:1px solid #3d2a5a; border-radius:1rem; overflow:hidden; grid-column:1/-1; }
-  .discount-panel .panel-title { border-bottom-color:#3d2a5a; color:#9b7fd4; }
-  .discount-panel .field { border-bottom-color:#2a1e40; }
-  .discount-panel .input-wrap { background:#231832; border-color:#3d2a5a; }
-  .discount-panel .input-wrap:focus-within { border-color:#9b7fd4; }
+  .discount-panel { background:#18102a; border:1px solid #DC643C44; border-radius:1rem; overflow:hidden; grid-column:1/-1; }
+  .discount-panel .panel-title { border-bottom-color:#DC643C44; color:#DC643C; }
+  .discount-panel .field { border-bottom-color:#1e1030; }
+  .discount-panel .input-wrap { background:#1e1040; border-color:#DC643C44; }
+  .discount-panel .input-wrap:focus-within { border-color:#DC643C; }
 
   /* TABELA COMPARATIVA */
   .results-panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; grid-column:1/-1; overflow:hidden; }
@@ -101,14 +123,14 @@
   .mcu-values { display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap; }
   .mcu-val { text-align:right; }
   .mcu-val .num { font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:600; color:var(--accent); line-height:1; }
-  .mcu-val .num.disc { color:var(--purple); }
+  .mcu-val .num.disc { color:#f0783c; }
   .mcu-val .num.queda { font-size:1.1rem; }
   .mcu-val .sub { font-size:0.71rem; color:var(--muted); margin-top:0.2rem; }
   .mcu-sep { color:var(--border); font-size:1.2rem; }
   .mcu-divider { border-left:1px solid var(--border); padding-left:1.25rem; margin-left:0.25rem; }
 
   /* insight */
-  .insight-box { background:#1a1a14; border:1px solid #3d3a1a; border-radius:0.75rem; padding:1rem 1.25rem; font-size:0.84rem; color:#d4c87a; line-height:1.7; grid-column:1/-1; }
+  .insight-box { background:#181030; border:1px solid #DC643C44; border-radius:0.75rem; padding:1rem 1.25rem; font-size:0.84rem; color:#f0c0a0; line-height:1.7; grid-column:1/-1; }
 
   /* PE */
   .pe-panel { background:var(--surface); border:1px solid var(--border); border-radius:1rem; grid-column:1/-1; padding:1.25rem; }
@@ -125,7 +147,7 @@
 <body>
 
 <header>
-  <div class="logo">Mudiflow<span>Calculadora de Margem de Contribuição Unitária</span></div>
+  <div class="logo">Mudiflow<span>Calculadora de Margem de Contribuição Unitária</span><span style="display:block;font-size:0.72rem;color:#6666aa;margin-top:0.15rem;font-weight:300;">por Elaine Lima</span></div>
 </header>
 
 <div class="main">
@@ -179,8 +201,8 @@
     <div class="field">
       <div class="field-label">Desconto concedido ao cliente<small>Todos os custos recalculados automaticamente abaixo</small></div>
       <div class="input-wrap" style="border-color:#3d2a5a">
-        <input type="number" id="desconto" value="10" min="0" max="100" step="0.1" oninput="calc()" style="color:#c4a8f0">
-        <span class="input-prefix" style="color:#9b7fd4">%</span>
+        <input type="number" id="desconto" value="10" min="0" max="100" step="0.1" oninput="calc()" style="color:#DC643C">
+        <span class="input-prefix" style="color:#DC643C">%</span>
       </div>
     </div>
   </div>
@@ -300,9 +322,9 @@
     </div>
     <div class="pe-grid">
       <div class="pe-card"><div class="pe-card-label">PE sem desconto</div><div class="pe-card-val" id="pe_un">—</div><div class="pe-card-sub">unidades / mês</div></div>
-      <div class="pe-card"><div class="pe-card-label">PE com desconto</div><div class="pe-card-val" id="pe_desc_un" style="color:var(--purple)">—</div><div class="pe-card-sub">unidades / mês</div></div>
+      <div class="pe-card"><div class="pe-card-label">PE com desconto</div><div class="pe-card-val" id="pe_desc_un" style="color:#f0783c">—</div><div class="pe-card-sub">unidades / mês</div></div>
       <div class="pe-card"><div class="pe-card-label">PE em R$ (sem desconto)</div><div class="pe-card-val" id="pe_rs">—</div><div class="pe-card-sub">faturamento mínimo</div></div>
-      <div class="pe-card"><div class="pe-card-label">PE em R$ (com desconto)</div><div class="pe-card-val" id="pe_desc_rs" style="color:var(--purple)">—</div><div class="pe-card-sub">faturamento mínimo</div></div>
+      <div class="pe-card"><div class="pe-card-label">PE em R$ (com desconto)</div><div class="pe-card-val" id="pe_desc_rs" style="color:#f0783c">—</div><div class="pe-card-sub">faturamento mínimo</div></div>
     </div>
   </div>
 
