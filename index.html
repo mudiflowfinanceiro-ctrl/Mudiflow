@@ -27,24 +27,12 @@
   .input-wrap { min-width:90px; }
   input[type="number"] { width:55px; font-size:0.82rem; }
 
-  /* Tabela mobile: empilhar sem coluna variação */
-  .tbl-head { display:none; }
-  .tbl-row {
-    grid-template-columns: 1fr;
-    padding:0.75rem 1rem;
-    gap:0.3rem;
-    border-bottom:1px solid var(--border);
-  }
-  .td-label { font-size:0.82rem; color:#b0c4d8; margin-bottom:0.2rem; }
-  .td-base, .td-desc, .td-var { font-size:0.82rem; text-align:left; }
-  .td-base::before { content:"Sem desc: "; font-size:0.72rem; color:var(--muted); }
-  .td-desc::before { content:"Com desc: "; font-size:0.72rem; color:var(--muted); }
-  .td-var::before  { content:"Variação: "; font-size:0.72rem; color:var(--muted); }
-  .td-var.neutral::before { content:""; }
-  .tbl-row.subtotal .td-base::before,
-  .tbl-row.subtotal .td-desc::before { content:""; }
-  .tbl-row.total .td-base::before,
-  .tbl-row.total .td-desc::before { content:""; }
+  /* Tabela mobile: 4 colunas compactas sem prefixos */
+  .tbl-head { grid-template-columns:1fr 72px 72px 54px; padding:0.5rem 0.75rem; gap:0.25rem; }
+  .tbl-row  { grid-template-columns:1fr 72px 72px 54px; padding:0.55rem 0.75rem; gap:0.25rem; font-size:0.75rem; }
+  .th       { font-size:0.6rem; }
+  .td-label { font-size:0.75rem; }
+  .td-base, .td-desc, .td-var { font-size:0.75rem; }
 
   .mcu-block { flex-direction:column; align-items:flex-start; gap:0.75rem; padding:1rem; }
   .mcu-values { flex-wrap:wrap; gap:1rem; width:100%; }
